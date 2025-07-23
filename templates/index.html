@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+
+{% block title %}Главная - Реферальная система{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <h1 class="text-center mb-4">Реферальная система</h1>
+        
+        <!-- Форма авторизации -->
+        <div class="card mb-4" id="auth-section">
+            <div class="card-header">
+                <h3>Авторизация по номеру телефона</h3>
+            </div>
+            <div class="card-body">
+                <div id="phone-form">
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">Номер телефона</label>
+                        <input type="text" class="form-control" id="phone" placeholder="+7xxxxxxxxxx">
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="sendCode()">Отправить код</button>
+                </div>
+                
+                <div id="code-form" style="display: none;">
+                    <div class="mb-3">
+                        <label for="code" class="form-label">Код подтверждения</label>
+                        <input type="text" class="form-control" id="code" placeholder="xxxx" maxlength="4">
+                    </div>
+                    <button type="button" class="btn btn-success" onclick="verifyCode()">Подтвердить</button>
+                    <button type="button" class="btn btn-secondary" onclick="backToPhone()">Назад</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Профиль пользователя -->
+        <div class="card" id="profile-section" style="display: none;">
+            <div class="card-header">
+                <h3>Профиль пользователя</h3>
+            </div>
+            <div class="card-body">
+                <div id="profile-info"></div>
+                
+                <div class="mt-4">
+                    <h5>Активировать инвайт-код</h5>
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" id="invite-code" placeholder="Введите инвайт-код">
+                        <button class="btn btn-outline-secondary" type="button" onclick="activateInvite()">Активировать</button>
+                    </div>
+                </div>
+                
+                <button type="button" class="btn btn-danger" onclick="logout()">Выйти</button>
+            </div>
+        </div>
+        
+        <!-- Сообщения -->
+        <div id="messages"></div>
+    </div>
+</div>
+
+<script>
+let currentUser = null;
+
+function showMessage(message, type = 'info') {
+    const messagesDiv = document.getElementById('messages');
+    messagesDiv.innerHTML = `
+        <div class="alert alert-${type} alert-dismissible fade show mt-3" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+}
+
+function sendCode() {
+    const phone = document.getElementById('phone').value;
+    if (!phone) {
+        showMessage('Введите номер телефона', 'warning');
+        return;
+    }
+    
+    axios.post('/api/auth/send-code/', {
+        phone_number: phone
+    })
+    .then(response => {
+        showMessage(`Код отправлен: ${response.data.code} (только для демо!)`, 'success');
+        document.getElementById('phone-form').style.display = 'none';
+        document.getElementById('code-form').style.display = 'block';
+    })
+    .catch(error => {
+        showMessage('Ошибка отправки кода: ' + (error.response?.data?.error || 'Неизвестная ошибка'), 'danger');
+    });
+}
+
+function verifyCode() {
+    const phone = document.getElementById('phone').value;
+    const code = document.getElementById('code').value;
+    
+    if (!code) {
+        showMessage('Введите код', 'warning');
+        return;
+    }
+    
+    axios.post('/api/auth/verify-code/', {
+        phone_number: phone,
+        code: code
+    })
+    .then(response => {
+        currentUser = response.data;
+        showMessage(response.data.message, 'success');
+        loadProfile();
+    })
+    .catch(error => {
+        showMessage('Ошибка проверки кода: ' + (error.response?.data?.error || 'Неизвестная ошибка'), 'danger');
+    });
+}
+
+function loadProfile() {
+    if (!currentUser) return;
+    
+    axios.get('/api/auth/profile/', {
+        headers: {
+            'X-User-ID': currentUser.user_id
+        }
+    })
+    .then(response => {
+        const profile = response.data;
+        document.getElementById('profile-info').innerHTML = `
+            <p><strong>Номер телефона:</strong> ${profile.phone_number}</p>
+            <p><strong>Ваш инвайт-код:</strong> <code>${profile.invite_code}</code></p>
+            <p><strong>Активированный код:</strong> ${profile.activated_invite_code || 'Не активирован'}</p>
+            <p><strong>Рефералы:</strong> ${profile.referrals.length > 0 ? profile.referrals.join(', ') : 'Нет рефералов'}</p>
+        `;
+        
+        document.getElementById('auth-section').style.display = 'none';
+        document.getElementById('profile-section').style.display = 'block';
+    })
+    .catch(error => {
+        showMessage('Ошибка загрузки профиля: ' + (error.response?.data?.error || 'Неизвестная ошибка'), 'danger');
+    });
+}
+
+function activateInvite() {
+    const inviteCode = document.getElementById('invite-code').value;
+    if (!inviteCode) {
+        showMessage('Введите инвайт-код', 'warning');
+        return;
+    }
+    
+    axios.post('/api/auth/activate-invite/', {
+        invite_code: inviteCode
+    }, {
+        headers: {
+            'X-User-ID': currentUser.user_id
+        }
+    })
+    .then(response => {
+        showMessage(response.data.message, 'success');
+        document.getElementById('invite-code').value = '';
+        loadProfile(); // Обновляем профиль
+    })
+    .catch(error => {
+        showMessage('Ошибка активации кода: ' + (error.response?.data?.error || 'Неизвестная ошибка'), 'danger');
+    });
+}
+
+function backToPhone() {
+    document.getElementById('code-form').style.display = 'none';
+    document.getElementById('phone-form').style.display = 'block';
+    document.getElementById('code').value = '';
+}
+
+function logout() {
+    currentUser = null;
+    document.getElementById('profile-section').style.display = 'none';
+    document.getElementById('auth-section').style.display = 'block';
+    document.getElementById('phone-form').style.display = 'block';
+    document.getElementById('code-form').style.display = 'none';
+    document.getElementById('phone').value = '';
+    document.getElementById('code').value = '';
+    document.getElementById('invite-code').value = '';
+    showMessage('Вы вышли из системы', 'info');
+}
+</script>
+{% endblock %}

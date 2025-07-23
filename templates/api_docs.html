@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}API Документация - Реферальная система{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-10 mx-auto">
+        <h1 class="text-center mb-4">API Документация</h1>
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3>Быстрый старт</h3>
+            </div>
+            <div class="card-body">
+                <p>Для тестирования API вы можете использовать:</p>
+                <ul>
+                    <li><a href="/api/docs/" target="_blank">ReDoc документация</a></li>
+                    <li><a href="/api/swagger/" target="_blank">Swagger UI</a></li>
+                    <li><a href="/" class="btn btn-sm btn-primary">Веб-интерфейс</a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3>Тестовые пользователи</h3>
+            </div>
+            <div class="card-body">
+                <p>В системе уже созданы тестовые пользователи:</p>
+                <ul>
+                    <li><strong>+71234567890</strong> - invite_code: <code>yOp6pJ</code></li>
+                    <li><strong>+79876543210</strong> - invite_code: <code>M0U1Fa</code></li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3>Endpoints</h3>
+            </div>
+            <div class="card-body">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Метод</th>
+                            <th>URL</th>
+                            <th>Описание</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="badge bg-success">POST</span></td>
+                            <td><code>/api/auth/send-code/</code></td>
+                            <td>Отправка кода авторизации</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge bg-success">POST</span></td>
+                            <td><code>/api/auth/verify-code/</code></td>
+                            <td>Проверка кода авторизации</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge bg-primary">GET</span></td>
+                            <td><code>/api/auth/profile/</code></td>
+                            <td>Получение профиля пользователя</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge bg-success">POST</span></td>
+                            <td><code>/api/auth/activate-invite/</code></td>
+                            <td>Активация инвайт-кода</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3>Примеры использования</h3>
+            </div>
+            <div class="card-body">
+                <h5>1. Отправка кода</h5>
+                <pre><code>curl -X POST http://localhost:8000/api/auth/send-code/ \
+  -H "Content-Type: application/json" \
+  -d '{"phone_number": "+71234567890"}'</code></pre>
+                
+                <h5>2. Проверка кода</h5>
+                <pre><code>curl -X POST http://localhost:8000/api/auth/verify-code/ \
+  -H "Content-Type: application/json" \
+  -d '{"phone_number": "+71234567890", "code": "1234"}'</code></pre>
+                
+                <h5>3. Получение профиля</h5>
+                <pre><code>curl -X GET http://localhost:8000/api/auth/profile/ \
+  -H "X-User-ID: 1"</code></pre>
+                
+                <h5>4. Активация инвайт-кода</h5>
+                <pre><code>curl -X POST http://localhost:8000/api/auth/activate-invite/ \
+  -H "Content-Type: application/json" \
+  -H "X-User-ID: 1" \
+  -d '{"invite_code": "ABC123"}'</code></pre>
+            </div>
+        </div>
+        
+        <div class="alert alert-info">
+            <strong>Примечание:</strong> Для аутентификации используется заголовок <code>X-User-ID</code> 
+            с ID пользователя, полученным при авторизации.
+        </div>
+    </div>
+</div>
+{% endblock %}
