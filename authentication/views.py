@@ -9,6 +9,7 @@ from drf_spectacular.utils import extend_schema, OpenApiExample
 from drf_spectacular.openapi import OpenApiResponse
 import random
 import time
+from django.views.decorators.csrf import csrf_exempt
 
 from .models import User, AuthCode
 from .serializers import (
@@ -20,6 +21,7 @@ from .serializers import (
 from referrals.models import Referral
 
 
+@csrf_exempt
 @extend_schema(
     tags=['Authentication'],
     summary='Отправка кода авторизации',
@@ -65,6 +67,7 @@ def send_auth_code(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@csrf_exempt
 @extend_schema(
     tags=['Authentication'],
     summary='Проверка кода авторизации',
@@ -139,6 +142,7 @@ def get_profile(request):
     return Response(serializer.data)
 
 
+@csrf_exempt
 @extend_schema(
     tags=['Profile'],
     summary='Активация инвайт-кода',
